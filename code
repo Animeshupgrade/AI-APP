@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulate - Dynamic Form Builder</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <link href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body>
+  <div id="root" class="min-h-screen bg-gray-100"></div>
+  <script>
+    const { useState, useEffect } = React;
+
+    // Main App Component
+    const App = () => {
+      const [user, setUser] = useState(null);
+      const [forms, setForms] = useState([]);
+      const [currentForm, setCurrentForm] = useState(null);
+      const [responses, setResponses] = useState([]);
+      const [view, setView] = useState('login');
+
+      const handleLogin = () => {
+        setUser({ id: 'user1', name: 'Form Designer' });
+        setView('designer');
+      };
+
+      return React.createElement(
+        'div',
+        { className: 'container mx-auto p-4' },
+        view === 'login' && React.createElement(Login, { onLogin: handleLogin }),
+        view === 'designer' &&
+          React.createElement(FormDesigner, {
+            forms,
+            setForms,
+            setCurrentForm,
+            setView,
+          }),
+        view === 'publish' &&
+          React.createElement(PublishForm, {
+            form: currentForm,
+            setForms,
+            setView,
+          }),
+        view === 'respond' &&
+          React.createElement(FormResponse, {
+            form: currentForm,
+            setResponses,
+            setView,
+          }),
+        view === 'dashboard' &&
+          React.createElement(ResultsDashboard, {
+            form: currentForm,
+            responses,
+            setView,
+          })
+      );
+    };
+
+    // Login Component
+    const Login = ({ onLogin }) =>
+      React.createElement(
+        'div',
+        { className: 'max-w-md mx-auto bg-white p-6 rounded-lg shadow-md' },
+        React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, 'Login'),
+        React.createElement(
+          'button',
+          {
+            onClick: onLogin,
+            className: 'w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600',
+          },
+          'Login as Form Designer'
+        )
+      );
+
+    // Form Designer Component
+    const FormDesigner = ({ forms, setForms, setCurrentForm, setView }) => {
+      const [fields, setFields] = useState([]);
+      const [formTitle, setFormTitle] = useState('');
+      const [pages, setPages] = useState([[]]);
+
+      const addField = (type) => {
+        const newField = {
+          id: Date.now(),
+          type,
+          label: `New ${type} Field`,
+          required: false,
+          options: type === 'dropdown' || type === 'checkbox' ? ['Option 1'] : [],
+          conditions: [],
+        };
+        setFields([...fields, newField]);
+        const newPages = [...pages];
+        newPages[newPages.length - 1].push(newField.id);
+        setPages(newPages);
+      };
+
+      const saveForm = () => {
+        const newForm = {
+          id: Date.now(),
+          title: formTitle || 'Untitled Form',
+          fields,
+          pages,
+          status: 'draft',
+          url: `form-${Date.now()}`,
+        };
+        setForms([...forms, newForm]);
+        setCurrentForm(newForm);
+        setView('publish');
+      };
+
+      return React.createElement(
+        'div',
+        { className: 'bg-white p-6 rounded-lg shadow-md' },
+        React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, 'Form Designer'),
+        React.createElement('input', {
+          type: 'text',
+          placeholder: 'Form Title',
+          value: formTitle,
+          onChange: (e) => setFormTitle(e.target.value),
+          className: 'w-full p-2 mb-4 border rounded',
+        }),
+        React.createElement(
+          'div',
+          { className: 'flex space-x-2 mb-4' },
+          ['text', 'email', 'number', 'dropdown', 'checkbox', 'rating'].map((type) =>
+            React.createElement(
+              'button',
+              {
+                key: type,
+                onClick: () => addField(type),
+                className: 'bg-gray-200 p-2 rounded hover:bg-gray-300',
+              },
+              `Add ${type.charAt(0).toUpperCase() + type.slice(1)}`
+            )
+          )
+        ),
+        React.createElement(
+          'div',
+          { className: 'space-y-4' },
+          fields.map((field) =>
+            React.createElement(
+              'div',
+              { key: field.id, className: 'border p-4 rounded' },
+              React.createElement('input', {
+                type: 'text',
+                value: field.label,
+                onChange: (e) => {
+                  const newFields = fields.map((f) =>
+                    f.id === field.id ? { ...f, label: e.target.value } : f
+                  );
+                  setFields(newFields);
+                },
+                className: 'w-full p-2 mb-2 border rounded',
+              }),
+              React.createElement(
+                'label',
+                null,
+                React.createElement('input', {
+                  type: 'checkbox',
+                  checked: field.required,
+                  onChange: (e) => {
+                    const newFields = fields.map((f) =>
+                      f.id === field.id ? { ...f, required: e.target.checked } : f
+                    );
+                    setFields(newFields);
+                  },
+                }),
+                'Required'
+              )
+            )
+          )
+        ),
+        React.createElement(
+          'button',
+          {
+            onClick: saveForm,
+            className: 'mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600',
+          },
+          'Save & Publish'
+        ),
+        React.createElement(
+          'button',
+          {
+            onClick: () => setView('dashboard'),
+            className: 'mt-4 ml-2 bg-gray-500 text-white p-2 rounded hover:bg-gray-600',
+          },
+          'View Results'
+        )
+      );
+    };
+
+    // Publish Form Component
+    const PublishForm = ({ form, setForms, setView }) => {
+      const [status, setStatus] = useState(form.status);
+      const [password, setPassword] = useState('');
+
+      const publishForm = () => {
+        setForms((prev) =>
+          prev.map((f) =>
+            f.id === form.id ? { ...f, status, password } : f
+          )
+        );
+        setView('designer');
+      };
+
+      return React.createElement(
+        'div',
+        { className: 'max-w-md mx-auto bg-white p-6 rounded-lg shadow-md' },
+        React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, 'Publish Form'),
+        React.createElement('p', null, `Shareable URL: ${window.location.origin}/${form.url}`),
+        React.createElement(
+          'select',
+          {
+            value: status,
+            onChange: (e) => setStatus(e.target.value),
+            className: 'w-full p-2 mb-4 border rounded',
+          },
+          React.createElement('option', { value: 'open' }, 'Open'),
+          React.createElement('option', { value: 'closed' }, 'Closed'),
+          React.createElement('option', { value: 'scheduled' }, 'Scheduled')
+        ),
+        React.createElement('input', {
+          type: 'text',
+          placeholder: 'Optional Password',
+          value: password,
+          onChange: (e) => setPassword(e.target.value),
+          className: 'w-full p-2 mb-4 border rounded',
+        }),
+        React.createElement(
+          'button',
+          {
+            onClick: publishForm,
+            className: 'w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600',
+          },
+          'Publish'
+        )
+      );
+    };
+
+    // Form Response Component
+    const FormResponse = ({ form, setResponses, setView }) => {
+      const [answers, setAnswers] = useState({});
+      const [currentPage, setCurrentPage] = useState(0);
+
+      const handleSubmit = () => {
+        setResponses((prev) => [
+          ...prev,
+          { formId: form.id, answers, timestamp: new Date().toISOString() },
+        ]);
+        alert('Form submitted!');
+        setView('designer');
+      };
+
+      return React.createElement(
+        'div',
+        { className: 'max-w-md mx-auto bg-white p-6 rounded-lg shadow-md' },
+        React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, form.title),
+        React.createElement(
+          'div',
+          { className: 'w-full bg-gray-200 rounded-full h-2.5 mb-4' },
+          React.createElement('div', {
+            className: 'bg-blue-500 h-2.5 rounded-full',
+            style: { width: `${((currentPage + 1) / form.pages.length) * 100}%` },
+          })
+        ),
+        form.pages[currentPage].map((fieldId) => {
+          const field = form.fields.find((f) => f.id === fieldId);
+          return React.createElement(
+            'div',
+            { key: field.id, className: 'mb-4' },
+            React.createElement('label', { className: 'block mb-1' }, field.label),
+            field.type === 'text' || field.type === 'email' || field.type === 'number'
+              ? React.createElement('input', {
+                  type: field.type,
+                  onChange: (e) => setAnswers({ ...answers, [field.id]: e.target.value }),
+                  className: 'w-full p-2 border rounded',
+                  required: field.required,
+                })
+              : field.type === 'dropdown'
+              ? React.createElement(
+                  'select',
+                  {
+                    onChange: (e) => setAnswers({ ...answers, [field.id]: e.target.value }),
+                    className: 'w-full p-2 border rounded',
+                    required: field.required,
+                  },
+                  React.createElement('option', { value: '' }, 'Select...'),
+                  field.options.map((opt, i) =>
+                    React.createElement('option', { key: i, value: opt }, opt)
+                  )
+                )
+              : field.type === 'checkbox'
+              ? React.createElement('input', {
+                  type: 'checkbox',
+                  onChange: (e) => setAnswers({ ...answers, [field.id]: e.target.checked }),
+                  className: 'p-2',
+                  required: field.required,
+                })
+              : React.createElement(
+                  'div',
+                  { className: 'flex' },
+                  [1, 2, 3, 4, 5].map((num) =>
+                    React.createElement(
+                      'button',
+                      {
+                        key: num,
+                        onClick: () => setAnswers({ ...answers, [field.id]: num }),
+                        className: `p-2 ${
+                          answers[field.id] === num ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                        }`,
+                      },
+                      num
+                    )
+                  )
+                )
+          );
+        }),
+        React.createElement(
+          'div',
+          { className: 'flex justify-between' },
+          currentPage > 0 &&
+            React.createElement(
+              'button',
+              {
+                onClick: () => setCurrentPage(currentPage - 1),
+                className: 'bg-gray-500 text-white p-2 rounded',
+              },
+              'Previous'
+            ),
+          currentPage < form.pages.length - 1
+            ? React.createElement(
+                'button',
+                {
+                  onClick: () => setCurrentPage(currentPage + 1),
+                  className: 'bg-blue-500 text-white p-2 rounded',
+                },
+                'Next'
+              )
+            : React.createElement(
+                'button',
+                {
+                  onClick: handleSubmit,
+                  className: 'bg-blue-500 text-white p-2 rounded',
+                },
+                'Submit'
+              )
+        )
+      );
+    };
+
+    // Results Dashboard Component
+    const ResultsDashboard = ({ form, responses, setView }) => {
+      const formResponses = responses.filter((r) => r.formId === form.id);
+
+      const exportCSV = () => {
+        const csv = [
+          ['Field', 'Response', 'Timestamp'],
+          ...formResponses.flatMap((r) =>
+            Object.entries(r.answers).map(([fieldId, value]) => [
+              form.fields.find((f) => f.id === parseInt(fieldId))?.label || fieldId,
+              value,
+              r.timestamp,
+            ])
+          ),
+        ]
+          .map((row) => row.join(','))
+          .join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${form.title}_responses.csv`;
+        a.click();
+      };
+
+      return React.createElement(
+        'div',
+        { className: 'bg-white p-6 rounded-lg shadow-md' },
+        React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, `Results: ${form.title}`),
+        React.createElement(
+          'button',
+          {
+            onClick: exportCSV,
+            className: 'mb-4 bg-green-500 text-white p-2 rounded hover:bg-green-600',
+          },
+          'Export CSV'
+        ),
+        React.createElement(
+          'table',
+          { className: 'w-full border-collapse' },
+          React.createElement(
+            'thead',
+            null,
+            React.createElement(
+              'tr',
+              null,
+              form.fields.map((field) =>
+                React.createElement('th', { key: field.id, className: 'border p-2' }, field.label)
+              ),
+              React.createElement('th', { className: 'border p-2' }, 'Timestamp')
+            )
+          ),
+          React.createElement(
+            'tbody',
+            null,
+            formResponses.map((response, i) =>
+              React.createElement(
+                'tr',
+                { key: i },
+                form.fields.map((field) =>
+                  React.createElement(
+                    'td',
+                    { key: field.id, className: 'border p-2' },
+                    response.answers[field.id] || '-'
+                  )
+                ),
+                React.createElement('td', { className: 'border p-2' }, response.timestamp)
+              )
+            )
+          )
+        ),
+        React.createElement(
+          'button',
+          {
+            onClick: () => setView('designer'),
+            className: 'mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600',
+          },
+          'Back to Designer'
+        )
+      );
+    };
+
+    // Render App
+    ReactDOM.render(React.createElement(App), document.getElementById('root'));
+  </script>
+</body>
+</html>
