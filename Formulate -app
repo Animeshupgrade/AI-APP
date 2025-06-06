@@ -1,0 +1,31 @@
+{
+  "package.json": {
+    "name": "formulate-app",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "next lint"
+    },
+    "dependencies": {
+      "next": "14.0.0",
+      "react": "^18.0.0",
+      "react-dom": "^18.0.0",
+      "lucide-react": "^0.263.1",
+      "recharts": "^2.8.0"
+    },
+    "devDependencies": {
+      "autoprefixer": "^10.0.0",
+      "postcss": "^8.0.0",
+      "tailwindcss": "^3.0.0",
+      "eslint": "^8.0.0",
+      "eslint-config-next": "14.0.0"
+    }
+  },
+  "next.config.js": "/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  output: 'export',\n  trailingSlash: true,\n  images: {\n    unoptimized: true\n  }\n}\n\nmodule.exports = nextConfig",
+  "tailwind.config.js": "/** @type {import('tailwindcss').Config} */\nmodule.exports = {\n  content: [\n    './pages/**/*.{js,ts,jsx,tsx,mdx}',\n    './components/**/*.{js,ts,jsx,tsx,mdx}',\n    './app/**/*.{js,ts,jsx,tsx,mdx}',\n  ],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n}",
+  "postcss.config.js": "module.exports = {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {},\n  },\n}",
+  "README.md": "# Formulate - Dynamic Form Builder\n\nA modern, responsive form builder and survey collector built with React and Next.js.\n\n## Features\n\n- 🎨 Drag-and-drop form builder\n- 📊 Real-time analytics and charts\n- 📱 Fully responsive design\n- 🔒 User authentication\n- 📈 Data visualization with Recharts\n- 🎯 Multiple field types (text, email, dropdown, rating, etc.)\n- 📋 Form preview and testing\n- 📊 CSV data export\n- 🎨 Modern UI with Tailwind CSS\n\n## Tech Stack\n\n- **Frontend**: React 18, Next.js 14\n- **Styling**: Tailwind CSS\n- **Charts**: Recharts\n- **Icons**: Lucide React\n- **Deployment**: Vercel/Netlify\n\n## Getting Started\n\n1. Clone the repository\n2. Install dependencies: `npm install`\n3. Run development server: `npm run dev`\n4. Open [http://localhost:3000](http://localhost:3000)\n\n## Deployment\n\n### Vercel (Recommended)\n1. Push code to GitHub\n2. Connect repository to Vercel\n3. Deploy automatically\n\n### Netlify\n1. Build: `npm run build`\n2. Deploy `out/` folder\n\n## Demo Credentials\nUse any email/password combination to access the demo.\n\n## License\nMIT"
+}
